@@ -115,6 +115,26 @@ curl -X POST "http://localhost:8001/v1/chat" \
 - Swagger UI: `http://localhost:8001/docs`
 - ReDoc: `http://localhost:8001/redoc`
 
+## Deploy خودکار
+
+برای deploy سریع و خودکار در سرور:
+
+```bash
+# Linux/Mac
+./deploy.sh
+
+# Windows
+deploy.bat
+```
+
+اسکریپت deploy به صورت خودکار:
+- آخرین تغییرات را از Git دریافت می‌کند
+- سرویس‌های Docker را متوقف می‌کند
+- Build و راه‌اندازی مجدد انجام می‌دهد
+- وضعیت سرویس‌ها را بررسی می‌کند
+
+برای جزئیات بیشتر: [DEPLOY_GUIDE.md](DEPLOY_GUIDE.md)
+
 ## توسعه
 
 ```bash
