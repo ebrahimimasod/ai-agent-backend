@@ -1,40 +1,40 @@
 @echo off
-REM اسکریپت Deploy خودکار برای Windows
-REM این اسکریپت کد را از Git دریافت کرده و سرویس‌های Docker را restart می‌کند
+REM Automated Deployment Script for Windows
+REM This script pulls the latest code from Git and restarts Docker services
 
 echo ========================================
-echo    شروع فرایند Deploy
+echo    Starting Deployment Process
 echo ========================================
 
-REM بررسی وجود docker-compose.yml
+REM Check if docker-compose.yml exists
 if not exist "docker-compose.yml" (
-    echo [خطا] فایل docker-compose.yml یافت نشد!
-    echo لطفاً این اسکریپت را در مسیر اصلی پروژه اجرا کنید.
+    echo [Error] docker-compose.yml not found!
+    echo Please run this script from the project root directory.
     exit /b 1
 )
 
-REM مرحله 1: دریافت آخرین تغییرات از Git
+REM Step 1: Pull latest changes from Git
 echo.
-echo [1/5] دریافت آخرین تغییرات از Git...
+echo [1/5] Pulling latest changes from Git...
 git fetch origin
 git pull origin main
 if errorlevel 1 (
-    echo [خطا] دریافت تغییرات از Git با مشکل مواجه شد
+    echo [Error] Failed to pull changes from Git
     exit /b 1
 )
-echo [موفق] کد با موفقیت به‌روزرسانی شد
+echo [Success] Code updated successfully
 
-REM مرحله 2: بررسی فایل .env
+REM Step 2: Check .env file
 echo.
-echo [2/5] بررسی فایل .env...
+echo [2/5] Checking .env file...
 if not exist ".env" (
-    echo [خطا] فایل .env یافت نشد!
+    echo [Error] .env file not found!
     if exist ".env.example" (
-        echo آیا می‌خواهید از .env.example کپی بگیرید؟ (Y/N)
+        echo Do you want to copy from .env.example? (Y/N)
         set /p REPLY=
         if /i "%REPLY%"=="Y" (
             copy .env.example .env
-            echo [موفق] فایل .env ایجاد شد. لطفاً آن را ویرایش کنید و دوباره deploy کنید
+            echo [Success] .env file created. Please edit it and run deploy again
             exit /b 1
         ) else (
             exit /b 1
@@ -43,63 +43,63 @@ if not exist ".env" (
         exit /b 1
     )
 ) else (
-    echo [موفق] فایل .env موجود است
+    echo [Success] .env file exists
 )
 
-REM مرحله 3: توقف سرویس‌های قبلی
+REM Step 3: Stop previous services
 echo.
-echo [3/5] توقف سرویس‌های قبلی...
+echo [3/5] Stopping previous services...
 docker compose down
-echo [موفق] سرویس‌ها متوقف شدند
+echo [Success] Services stopped
 
-REM مرحله 4: Build و اجرای سرویس‌های جدید
+REM Step 4: Build and start new services
 echo.
-echo [4/5] Build و اجرای سرویس‌های جدید...
+echo [4/5] Building and starting new services...
 docker compose build --no-cache
 docker compose up -d
 if errorlevel 1 (
-    echo [خطا] راه‌اندازی سرویس‌ها با مشکل مواجه شد
+    echo [Error] Failed to start services
     exit /b 1
 )
-echo [موفق] سرویس‌ها با موفقیت راه‌اندازی شدند
+echo [Success] Services started successfully
 
-REM مرحله 5: بررسی وضعیت سرویس‌ها
+REM Step 5: Check service status
 echo.
-echo [5/5] بررسی وضعیت سرویس‌ها...
+echo [5/5] Checking service status...
 timeout /t 5 /nobreak >nul
 
 echo.
-echo وضعیت Containers:
+echo Container Status:
 docker compose ps
 
 echo.
-echo بررسی Health Endpoint...
+echo Checking Health Endpoint...
 timeout /t 10 /nobreak >nul
 
 curl -s -o nul -w "HTTP Status: %%{http_code}" http://localhost:8001/health
 echo.
 
-REM نمایش لاگ‌های اخیر
+REM Show recent logs
 echo.
-echo لاگ‌های اخیر API:
+echo Recent API Logs:
 docker compose logs --tail=20 api
 
 echo.
 echo ========================================
-echo    Deploy با موفقیت انجام شد!
+echo    Deployment Completed Successfully!
 echo ========================================
 
 echo.
-echo دستورات مفید:
-echo   • مشاهده لاگ‌ها:        docker compose logs -f
-echo   • مشاهده لاگ API:       docker compose logs -f api
-echo   • مشاهده لاگ Worker:    docker compose logs -f worker
-echo   • وضعیت سرویس‌ها:       docker compose ps
-echo   • Restart سرویس‌ها:     docker compose restart
-echo   • توقف سرویس‌ها:        docker compose down
+echo Useful Commands:
+echo   • View logs:           docker compose logs -f
+echo   • View API logs:       docker compose logs -f api
+echo   • View Worker logs:    docker compose logs -f worker
+echo   • Service status:      docker compose ps
+echo   • Restart services:    docker compose restart
+echo   • Stop services:       docker compose down
 
 echo.
-echo API در دسترس است:
+echo API is available at:
 echo   • Health: http://localhost:8001/health
 echo   • Docs:   http://localhost:8001/docs
 
