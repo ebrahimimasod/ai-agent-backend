@@ -31,18 +31,22 @@ echo -e "Current branch: ${GREEN}$CURRENT_BRANCH${NC}"
 # Check for local changes
 if [[ -n $(git status -s) ]]; then
     echo -e "${YELLOW}Warning: You have uncommitted local changes${NC}"
-    read -p "Do you want to discard local changes and pull? (y/n): " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        git reset --hard HEAD
-        echo -e "${GREEN}✓ Local changes reset${NC}"
-    else
-        echo -e "${RED}Deployment cancelled${NC}"
-        exit 1
-    fi
+    echo -e "${YELLOW}Discarding local changes and pulling from remote...${NC}"
+    git reset --hard HEAD
+    echo -e "${GREEN}✓ Local changes reset${NC}"
 fi
 
-git pull origin $CURRENT_BRANCH
+# Pull with rebase to avoid merge commits
+echo -e "Pulling latest changes..."
+git pull --rebase origin $CURRENT_BRANCH
+
+# If rebase fails, abort and try with merge
+if [ $? -ne 0 ]; then
+    echo -e "${YELLOW}Rebase failed, trying with merge strategy...${NC}"
+    git rebase --abort 2>/dev/null
+    git reset --hard origin/$CURRENT_BRANCH
+fi
+
 echo -e "${GREEN}✓ Code updated successfully${NC}"
 
 # Step 2: Check .env file

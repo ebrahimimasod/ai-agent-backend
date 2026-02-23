@@ -120,12 +120,23 @@ curl -X POST "http://localhost:8001/v1/chat" \
 برای deploy سریع و خودکار در سرور:
 
 ```bash
-# Linux/Mac
+# Linux/Mac - Simple (Recommended for production)
+chmod +x deploy-simple.sh
+./deploy-simple.sh
+
+# Linux/Mac - Interactive
+chmod +x deploy.sh
 ./deploy.sh
 
 # Windows
 deploy.bat
 ```
+
+### Deployment Scripts:
+
+- **deploy-simple.sh**: Force syncs with remote, non-interactive (best for production)
+- **deploy.sh**: Interactive, handles merge conflicts
+- **deploy.bat**: Windows version
 
 اسکریپت deploy به صورت خودکار:
 - آخرین تغییرات را از Git دریافت می‌کند
@@ -133,7 +144,7 @@ deploy.bat
 - Build و راه‌اندازی مجدد انجام می‌دهد
 - وضعیت سرویس‌ها را بررسی می‌کند
 
-برای جزئیات بیشتر: [DEPLOY_GUIDE.md](DEPLOY_GUIDE.md)
+برای جزئیات بیشتر: [DEPLOY_GUIDE.md](DEPLOY_GUIDE.md) | [Troubleshooting](DEPLOY_TROUBLESHOOTING.md)
 
 ## توسعه
 
