@@ -1,23 +1,32 @@
-from flask import Flask, jsonify
-from flask_cors import CORS
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.db.session import engine
 from app.db.models import Base
-from app.api.routes_ingest import ingest_bp
-from app.api.routes_posts import posts_bp
-from app.api.routes_chat import chat_bp
+from app.api.routes_ingest import router as ingest_router
+from app.api.routes_posts import router as posts_router
+from app.api.routes_chat import router as chat_router
 
-app = Flask(__name__)
-CORS(app)
+app = FastAPI(title=settings.APP_NAME)
+
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Auto-create tables for MVP
 Base.metadata.create_all(bind=engine)
 
-app.register_blueprint(ingest_bp)
-app.register_blueprint(posts_bp)
-app.register_blueprint(chat_bp)
+# Register routers
+app.include_router(ingest_router)
+app.include_router(posts_router)
+app.include_router(chat_router)
 
 
-@app.route("/health", methods=["GET"])
+@app.get("/health")
 def health():
-    return jsonify({"ok": True})
+    return {"ok": True}

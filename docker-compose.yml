@@ -8,11 +8,10 @@ services:
       - chroma
     ports:
       - "8001:8000"
-    command: ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "4"]
-    environment:
-      - DJANGO_SETTINGS_MODULE=config.settings
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
     volumes:
       - .:/code
+    restart: unless-stopped
 
   worker:
     build: .
@@ -21,11 +20,10 @@ services:
       - postgres
       - redis
       - chroma
-    command: ["celery", "-A", "config", "worker", "--loglevel=INFO"]
-    environment:
-      - DJANGO_SETTINGS_MODULE=config.settings
+    command: ["celery", "-A", "app.tasks.celery_app:celery_app", "worker", "--loglevel=INFO"]
     volumes:
       - .:/code
+    restart: unless-stopped
 
   postgres:
     image: postgres:16-alpine
@@ -37,11 +35,13 @@ services:
       - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
     ports:
       - "6380:6379"
+    restart: unless-stopped
 
   chroma:
     image: chromadb/chroma:latest
@@ -49,6 +49,7 @@ services:
       - "8000:8000"
     volumes:
       - chromadata:/chroma/chroma
+    restart: unless-stopped
 
 volumes:
   pgdata:
