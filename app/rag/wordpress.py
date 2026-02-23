@@ -32,9 +32,14 @@ def fetch_posts(*, modified_after: str | None = None) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     page = 1
     per_page = settings.WP_PER_PAGE
+    max_posts = settings.WP_MAX_POSTS
 
     with httpx.Client(timeout=60) as client:
         while True:
+            # Check if we've reached the limit
+            if max_posts > 0 and len(out) >= max_posts:
+                break
+
             params = {"page": page, "per_page": per_page, "status": "publish"}
             if modified_after:
                 params["modified_after"] = modified_after
@@ -49,6 +54,12 @@ def fetch_posts(*, modified_after: str | None = None) -> list[dict[str, Any]]:
                 break
 
             out.extend(items)
+            
+            # If we have a limit and exceeded it, trim the results
+            if max_posts > 0 and len(out) > max_posts:
+                out = out[:max_posts]
+                break
+            
             page += 1
 
     return out

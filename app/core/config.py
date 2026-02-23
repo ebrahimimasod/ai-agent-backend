@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     WP_BASE_URL: str
     WP_POSTS_PATH: str = "/wp-json/wp/v2/posts"
     WP_PER_PAGE: int = 100
+    WP_MAX_POSTS: int = 0  # 0 means unlimited
     WP_USERNAME: str | None = None
     WP_APP_PASSWORD: str | None = None
 
