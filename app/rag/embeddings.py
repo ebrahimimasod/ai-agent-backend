@@ -37,13 +37,13 @@ def _embed_gemini(texts: list[str]) -> list[list[float]]:
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:embedContent"
     headers = {"x-goog-api-key": settings.GEMINI_API_KEY, "Content-Type": "application/json"}
 
-    payload = {"content": {"parts": [{"text": t} for t in texts]}}
-
+    embeddings = []
     with httpx.Client(timeout=60) as client:
-        r = client.post(url, headers=headers, json=payload)
-        r.raise_for_status()
-        data = r.json()
+        for text in texts:
+            payload = {"content": {"parts": [{"text": text}]}}
+            r = client.post(url, headers=headers, json=payload)
+            r.raise_for_status()
+            data = r.json()
+            embeddings.append(data["embedding"]["values"])
 
-    if "embeddings" in data:
-        return [e["values"] for e in data["embeddings"]]
-    return [data["embedding"]["values"]]
+    return embeddings
