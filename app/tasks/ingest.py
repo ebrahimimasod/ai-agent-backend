@@ -62,26 +62,3 @@ def ingest_wordpress(full_resync: bool = False) -> dict:
         return {"ok": True, "processed_posts": processed, "fetched_posts": len(posts), "finished_at": now.isoformat()}
     finally:
         db.close()
-            upsert_post_chunks(
-                post_id=wp_id,
-                title=html_to_text(title or ""),
-                url=link,
-                modified_gmt=modified_gmt,
-                chunks=chunks,
-                embeddings=embeddings,
-            )
-
-            crud.upsert_post(
-                db,
-                wp_post_id=wp_id,
-                slug=slug,
-                url=link,
-                title=html_to_text(title or ""),
-                modified_gmt=modified_gmt,
-                status=status,
-            )
-            processed += 1
-
-        return {"ok": True, "processed_posts": processed, "fetched_posts": len(posts), "finished_at": now.isoformat()}
-    finally:
-        db.close()
