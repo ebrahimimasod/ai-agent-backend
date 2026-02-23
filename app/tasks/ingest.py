@@ -35,10 +35,20 @@ def ingest_wordpress(full_resync: bool = False) -> dict:
 
             text = html_to_text(content_html or "")
             chunks = chunk_text(text)
+            
+            # Filter out empty chunks
+            chunks = [c for c in chunks if c and c.strip()]
+            
             if not chunks:
                 continue
 
             embeddings = embed_texts(chunks)
+            
+            # Ensure chunks and embeddings have the same length
+            if len(chunks) != len(embeddings):
+                print(f"Warning: chunks ({len(chunks)}) and embeddings ({len(embeddings)}) length mismatch for post {wp_id}")
+                continue
+            
             upsert_post_chunks(
                 post_id=wp_id,
                 title=html_to_text(title or ""),

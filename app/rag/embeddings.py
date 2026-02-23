@@ -35,15 +35,35 @@ def _embed_gemini(texts: list[str]) -> list[list[float]]:
 
     model = settings.GEMINI_EMBEDDING_MODEL
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:embedContent"
-    headers = {"x-goog-api-key": settings.GEMINI_API_KEY, "Content-Type": "application/json"}
-
+    
     embeddings = []
     with httpx.Client(timeout=60) as client:
         for text in texts:
-            payload = {"content": {"parts": [{"text": text}]}}
-            r = client.post(url, headers=headers, json=payload)
-            r.raise_for_status()
-            data = r.json()
-            embeddings.append(data["embedding"]["values"])
+            # Skip empty or whitespace-only texts
+            if not text or not text.strip():
+                continue
+            
+            # Gemini has a limit of ~20k characters per request
+            text = text[:20000] if len(text) > 20000 else text
+            
+            payload = {
+                "model": f"models/{model}",
+                "content": {
+                    "parts": [{"text": text}]
+                }
+            }
+            
+            params = {"key": settings.GEMINI_API_KEY}
+            
+            try:
+                r = client.post(url, params=params, json=payload)
+                r.raise_for_status()
+                data = r.json()
+                embeddings.append(data["embedding"]["values"])
+            except httpx.HTTPStatusError as e:
+                # Log the error with more details
+                print(f"Error embedding text (length: {len(text)}): {e}")
+                print(f"Response: {e.response.text if hasattr(e, 'response') else 'No response'}")
+                raise
 
     return embeddings
