@@ -1,91 +1,119 @@
-# مهاجرت از FastAPI به Flask
+# راهنمای مهاجرت از Flask به Django
 
-این پروژه با موفقیت از FastAPI به Flask تبدیل شده است.
+این پروژه از Flask به Django 5.1 (آخرین نسخه) بازنویسی شده است.
 
 ## تغییرات اصلی
 
-### 1. فریمورک اصلی
-- **قبل**: FastAPI با uvicorn
-- **بعد**: Flask با flask-cors
+### ساختار پروژه
 
-### 2. ساختار Route ها
-- **قبل**: استفاده از `APIRouter` و `@router.get/post`
-- **بعد**: استفاده از `Blueprint` و `@bp.route`
+```
+پروژه قبلی (Flask):          پروژه جدید (Django):
+app/                          config/              # تنظیمات Django
+├── api/                      ├── settings.py
+├── core/                     ├── urls.py
+├── db/                       ├── wsgi.py
+├── rag/                      ├── asgi.py
+├── tasks/                    └── celery.py
+└── main.py                   
+                              core/                # اپلیکیشن اصلی
+                              ├── models.py
+                              ├── views.py
+                              ├── serializers.py
+                              ├── authentication.py
+                              ├── tasks.py
+                              └── urls.py
+                              
+                              rag/                 # ماژول RAG
+                              ├── chroma_store.py
+                              ├── chunking.py
+                              ├── embeddings.py
+                              ├── llm.py
+                              ├── prompt.py
+                              └── wordpress.py
+                              
+                              manage.py            # CLI Django
+```
 
-### 3. Dependency Injection
-- **قبل**: استفاده از `Depends()` برای authentication و database session
-- **بعد**: استفاده از decorators (`@require_api_key`) و مدیریت دستی session
+### تغییرات فنی
 
-### 4. Request/Response Handling
-- **قبل**: Pydantic models به صورت خودکار validate می‌شدند
-- **بعد**: استفاده از `request.get_json()` و validation دستی با Pydantic
+1. **ORM**: SQLAlchemy → Django ORM
+2. **API Framework**: Flask → Django REST Framework
+3. **احراز هویت**: دکوراتور سفارشی → DRF Authentication Class
+4. **مدل‌ها**: SQLAlchemy models → Django models
+5. **مایگریشن**: Alembic → Django migrations
+6. **تنظیمات**: Pydantic Settings (حفظ شده) + Django Settings
 
-### 5. Response Format
-- **قبل**: بازگشت مستقیم dictionary
-- **بعد**: استفاده از `jsonify()` برای تبدیل به JSON response
+### فایل‌های جدید
 
-### 6. Query Parameters
-- **قبل**: استفاده از `Query()` با validation خودکار
-- **بعد**: استفاده از `request.args.get()` با validation دستی
+- `manage.py`: CLI اصلی Django
+- `config/settings.py`: تنظیمات Django
+- `config/celery.py`: پیکربندی Celery برای Django
+- `core/models.py`: مدل‌های Django
+- `core/views.py`: APIView‌های Django
+- `core/serializers.py`: سریالایزرهای DRF
+- `core/authentication.py`: کلاس احراز هویت سفارشی
 
-### 7. Path Parameters
-- **قبل**: تعریف در decorator مثل `@router.get("/jobs/{job_id}")`
-- **بعد**: تعریف در decorator مثل `@bp.route("/jobs/<job_id>")`
+### دستورات مهاجرت
 
-### 8. Error Handling
-- **قبل**: `HTTPException` برای خطاها
-- **بعد**: بازگشت tuple از `(jsonify(...), status_code)`
+```bash
+# ایجاد مایگریشن‌ها
+python manage.py makemigrations
 
-## فایل‌های تغییر یافته
+# اجرای مایگریشن‌ها
+python manage.py migrate
 
-1. `app/main.py` - تبدیل FastAPI app به Flask app
-2. `app/api/deps.py` - تبدیل dependency به decorator
-3. `app/api/routes_chat.py` - تبدیل router به blueprint
-4. `app/api/routes_ingest.py` - تبدیل router به blueprint
-5. `app/api/routes_posts.py` - تبدیل router به blueprint
-6. `requirements.txt` - جایگزینی fastapi/uvicorn با flask/flask-cors
-7. `docker-compose.yml` - تغییر command از uvicorn به flask
-8. `README.md` - به‌روزرسانی مستندات
+# ایجاد superuser (اختیاری)
+python manage.py createsuperuser
 
-## نحوه اجرا
+# اجرای سرور توسعه
+python manage.py runserver
 
-### Development
+# اجرای Celery worker
+celery -A config worker --loglevel=INFO
+```
+
+### تغییرات در Docker
+
+- پورت API: 5000 → 8000
+- دستور اجرا: `flask run` → `gunicorn config.wsgi:application`
+- دستور worker: `celery -A app.tasks.celery_app` → `celery -A config worker`
+
+### API Endpoints (بدون تغییر)
+
+همه endpoint‌ها همانند قبل کار می‌کنند:
+- `GET /health`
+- `POST /v1/ingest/run`
+- `GET /v1/ingest/jobs/{job_id}`
+- `GET /v1/posts`
+- `POST /v1/chat`
+
+### نکات مهم
+
+1. همه کدهای RAG (embeddings, chunking, chroma, llm) بدون تغییر باقی مانده‌اند
+2. احراز هویت با `X-API-Key` header همچنان کار می‌کند
+3. Celery tasks با همان نام‌ها ثبت می‌شوند
+4. پایگاه داده PostgreSQL بدون تغییر است
+
+### مزایای Django
+
+- ORM قدرتمندتر و کامل‌تر
+- Admin panel داخلی (در صورت نیاز)
+- سیستم مایگریشن بهتر
+- امنیت بیشتر به صورت پیش‌فرض
+- اکوسیستم بزرگتر و پشتیبانی بهتر
+- مستندات جامع‌تر
+
+## نصب و اجرا
+
 ```bash
 # نصب dependencies
 pip install -r requirements.txt
 
-# اجرای Flask app
-flask run --host=0.0.0.0 --port=5000
-```
+# مایگریشن دیتابیس
+python manage.py migrate
 
-### Production با Docker
-```bash
+# اجرا با Docker
 docker compose up -d --build
 ```
 
-API در آدرس `http://localhost:8001` در دسترس خواهد بود.
-
-## نکات مهم
-
-1. همه endpoint ها نیاز به header `X-API-Key` دارند
-2. پورت پیش‌فرض از 8000 به 5000 تغییر کرده (داخل container)
-3. پورت exposed همچنان 8001 است (خارج از container)
-4. تمام functionality های قبلی حفظ شده‌اند
-5. Celery worker بدون تغییر باقی مانده است
-
-## تست API
-
-```bash
-# Health check
-curl http://localhost:8001/health
-
-# Ingest
-curl -X POST "http://localhost:8001/v1/ingest/run?full_resync=true" \
-  -H "X-API-Key: your-api-key"
-
-# Chat
-curl -X POST "http://localhost:8001/v1/chat" \
-  -H "X-API-Key: your-api-key" \
-  -H "Content-Type: application/json" \
-  -d '{"question": "سوال شما"}'
-```
+پروژه آماده استفاده است!

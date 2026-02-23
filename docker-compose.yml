@@ -7,10 +7,10 @@ services:
       - redis
       - chroma
     ports:
-      - "8001:5000"
-    command: ["flask", "run", "--host=0.0.0.0", "--port=5000"]
+      - "8001:8000"
+    command: ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "4"]
     environment:
-      - FLASK_APP=app.main:app
+      - DJANGO_SETTINGS_MODULE=config.settings
     volumes:
       - .:/code
 
@@ -21,7 +21,9 @@ services:
       - postgres
       - redis
       - chroma
-    command: ["celery", "-A", "app.tasks.celery_app:celery_app", "worker", "--loglevel=INFO"]
+    command: ["celery", "-A", "config", "worker", "--loglevel=INFO"]
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
     volumes:
       - .:/code
 
