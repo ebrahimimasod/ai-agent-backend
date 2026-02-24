@@ -29,6 +29,7 @@ OPENAI_API_KEY=your-openai-key
 GEMINI_API_KEY=your-gemini-key
 ```
 
+
 ### 2. اجرا با Docker
 
 ```bash
