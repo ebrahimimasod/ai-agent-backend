@@ -42,12 +42,12 @@ def search_similar(*, query_embedding: list[float], top_k: int) -> list[dict]:
     res = col.query(
         query_embeddings=[query_embedding],
         n_results=top_k,
-        include=["documents", "metadatas", "distances", "ids"],
+        include=["documents", "metadatas", "distances"],
     )
     docs = res.get("documents", [[]])[0]
     metas = res.get("metadatas", [[]])[0]
     dists = res.get("distances", [[]])[0]
-    ids = res.get("ids", [[]])[0]
+    ids = res.get("ids", [[]])[0]  # ids همیشه برگردانده میشه حتی اگر در include نباشه
 
     out = []
     for i in range(len(docs)):
