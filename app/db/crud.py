@@ -46,6 +46,29 @@ def get_latest_modified_gmt(db: Session) -> str | None:
     return db.scalar(select(func.max(Post.modified_gmt)))
 
 
+def get_post_by_wp_id(db: Session, wp_post_id: int) -> Post | None:
+    return db.scalar(select(Post).where(Post.wp_post_id == wp_post_id))
+
+
+def should_reprocess_post(db: Session, wp_post_id: int, modified_gmt: str | None) -> bool:
+    """
+    Check if a post needs reprocessing (embedding).
+    Returns True if:
+    - Post doesn't exist in DB
+    - Post's modified_gmt is different from the new one
+    """
+    existing = get_post_by_wp_id(db, wp_post_id)
+    if not existing:
+        return True
+
+    # If modified_gmt is the same, no need to reprocess
+    if existing.modified_gmt == modified_gmt:
+        return False
+
+    return True
+
+
+
 def create_ingest_job(db: Session, celery_task_id: str) -> IngestJob:
     job = IngestJob(celery_task_id=celery_task_id, status="queued")
     db.add(job)

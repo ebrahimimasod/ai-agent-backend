@@ -23,11 +23,18 @@ def ingest_wordpress(full_resync: bool = False) -> dict:
         posts = fetch_posts(modified_after=modified_after)
 
         processed = 0
+        skipped = 0
         for p in posts:
             wp_id = int(p["id"])
             slug = p.get("slug")
             status = p.get("status")
             modified_gmt = p.get("modified_gmt")
+
+            # Check if post needs reprocessing (embedding)
+            if not crud.should_reprocess_post(db, wp_id, modified_gmt):
+                print(f"Skipping post {wp_id} - already up to date (modified_gmt: {modified_gmt})")
+                skipped += 1
+                continue
 
             title = (p.get("title") or {}).get("rendered") if isinstance(p.get("title"), dict) else p.get("title")
             link = p.get("link")
@@ -42,6 +49,7 @@ def ingest_wordpress(full_resync: bool = False) -> dict:
             if not chunks:
                 continue
 
+            print(f"Processing post {wp_id} - creating embeddings for {len(chunks)} chunks")
             embeddings = embed_texts(chunks)
             
             # Ensure chunks and embeddings have the same length
@@ -69,6 +77,6 @@ def ingest_wordpress(full_resync: bool = False) -> dict:
             )
             processed += 1
 
-        return {"ok": True, "processed_posts": processed, "fetched_posts": len(posts), "finished_at": now.isoformat()}
+        return {"ok": True, "processed_posts": processed, "skipped_posts": skipped, "fetched_posts": len(posts), "finished_at": now.isoformat()}
     finally:
         db.close()
