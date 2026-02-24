@@ -1,4 +1,4 @@
-def build_rag_prompt(*, question: str, chunks: list[dict]) -> str:
+def build_rag_prompt(*, question: str, chunks: list[dict], language: str = "English") -> str:
     lines: list[str] = []
     lines.append("You will answer the user's question using the provided context snippets.")
     lines.append("If the context does not contain the answer, say you don't know.")
@@ -12,5 +12,5 @@ def build_rag_prompt(*, question: str, chunks: list[dict]) -> str:
         title = meta.get("title", "")
         url = meta.get("url", "")
         lines.append(f"\n[{i}] Title: {title}\nURL: {url}\nSnippet:\n{ch.get('text','')}")
-    lines.append("\nAnswer in Persian:")
+    lines.append(f"\nAnswer in {language}:")
     return "\n".join(lines)

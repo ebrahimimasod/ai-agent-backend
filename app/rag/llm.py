@@ -18,7 +18,7 @@ def _gen_openai(prompt: str) -> str:
 
     payload = {
         "model": settings.OPENAI_RESPONSES_MODEL,
-        "instructions": "You are a helpful assistant. Answer in Persian. Use the provided context only when relevant. If unknown, say you don't know.",
+        "instructions": "You are a helpful assistant. Answer in the same language as the user's question. Use the provided context only when relevant. If unknown, say you don't know.",
         "input": prompt,
     }
 
